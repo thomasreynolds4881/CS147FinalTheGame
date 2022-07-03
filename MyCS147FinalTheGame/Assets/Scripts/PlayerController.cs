@@ -4,13 +4,20 @@ using UnityEngine;
 using UnityEngine.SceneManagement;
 
 public class PlayerController : MonoBehaviour {
-    public float speed = 5f; // Initialize speed
+    public float speed; // Initialize speed
     public bool isTouchingWall = false;
     public bool isTouchingGround = false;
     public int jumpsLeft = 1;
     public int dashLeft = 1;
     public int deaths = 0;
     private bool facingRight = true;
+
+    public float dashForce;
+    public float startDashTimer;
+
+    float currentDashTimer;
+    bool isDashing;
+    int dashDirection;
 
     void Start() {
 
@@ -46,42 +53,64 @@ public class PlayerController : MonoBehaviour {
             if (isTouchingWall) {
                 // wall jump
                 gameObject.GetComponent<Rigidbody2D>().velocity = new Vector2(0f, 0f);
-                gameObject.GetComponent<Rigidbody2D>().AddForce(new Vector2(0f, 8f), ForceMode2D.Impulse);
+                gameObject.GetComponent<Rigidbody2D>().AddForce(new Vector2(0f, 15f), ForceMode2D.Impulse);
 
             } else {
                 // normal jump
                 Vector3 v = gameObject.GetComponent<Rigidbody2D>().velocity;
                 v.y = 0f;
-                gameObject.GetComponent<Rigidbody2D>().velocity = v;
-                gameObject.GetComponent<Rigidbody2D>().AddForce(new Vector2(0f, 8f), ForceMode2D.Impulse);
-                if(!isTouchingGround)
+                if (!isDashing)
                 {
-                    jumpsLeft -= 1;
+                    gameObject.GetComponent<Rigidbody2D>().velocity = v;
+                    if (!isTouchingGround)
+                    {
+                        jumpsLeft -= 1;
+                        gameObject.GetComponent<Rigidbody2D>().AddForce(new Vector2(0f, 20f), ForceMode2D.Impulse);
+                    }
+                    else
+                    {
+                        gameObject.GetComponent<Rigidbody2D>().AddForce(new Vector2(0f, 14f), ForceMode2D.Impulse);
+                    }
                 }
             }
 
         }
     }
 
+
     void Dash()
     {
-        // dash using F or mouse1
-        if (Input.GetButtonDown("Dash") && dashLeft > 0)
+        // start dash animation
+        if (Input.GetButtonDown("Dash") && dashLeft > 0 && !isTouchingGround)
         {
+            isDashing = true;
+            dashLeft -= 1;
+            currentDashTimer = startDashTimer;
+            gameObject.GetComponent<Rigidbody2D>().velocity = Vector2.zero;
+
             if (facingRight)
             {
-                gameObject.GetComponent<Rigidbody2D>().AddForce(new Vector2(8f, 0f), ForceMode2D.Impulse);
+                dashDirection = 1;
             }
             else
             {
-                gameObject.GetComponent<Rigidbody2D>().AddForce(new Vector2(-8f, 0f), ForceMode2D.Impulse);
+                dashDirection = -1;
             }
-            if (!isTouchingGround)
+        }
+
+        if (isDashing)
+        {
+            gameObject.GetComponent<Rigidbody2D>().velocity = transform.right * dashDirection * dashForce;
+            currentDashTimer -= Time.deltaTime;
+
+            if (currentDashTimer <= 0 || isTouchingWall)
             {
-                dashLeft -= 1;
+                isDashing = false;
+                gameObject.GetComponent<Rigidbody2D>().velocity = Vector2.zero;
             }
         }
     }
+
 
     void Flip()
     {
@@ -89,10 +118,10 @@ public class PlayerController : MonoBehaviour {
         facingRight = !facingRight;
         if (facingRight) {
             this.transform.GetChild(1).transform.position += new Vector3(0.45f, 0f, 0f);
-            this.transform.GetChild(2).transform.position += new Vector3(0.978f, 0f, 0f);
+            this.transform.GetChild(2).transform.position += new Vector3(0.95f, 0f, 0f);
         } else {
             this.transform.GetChild(1).transform.position += new Vector3(-0.45f, 0f, 0f);
-            this.transform.GetChild(2).transform.position += new Vector3(-0.978f, 0f, 0f);
+            this.transform.GetChild(2).transform.position += new Vector3(-0.95f, 0f, 0f);
         }
     }
 
